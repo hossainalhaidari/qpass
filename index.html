@@ -1,0 +1,77 @@
+{{define "layout"}}
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>qPass Secret Sharing Tool</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/sakura.css@1.4.1/css/sakura-dark.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sjcl@1.0.8/sjcl.min.js"></script>
+  </head>
+  <body>
+    {{if .Display}}
+    <button onClick="copy()">Copy</button>
+    <pre id="text" style="margin-top: 1em"></pre>
+    <script type="text/javascript">
+      document.getElementById("text").innerHTML = sjcl.decrypt(
+        '{{.Secret}}',
+        '{{.Text}}'
+      );
+
+      function copy() {
+        navigator.clipboard.writeText(
+          document.getElementById("text").innerHTML
+        );
+      }
+    </script>
+    {{else}}
+    <textarea rows="15" id="input"></textarea>
+    <button onclick="encrypt()">Encrypt</button>
+    <div id="result" style="display: none">
+      <blockquote id="url"></blockquote>
+      <button onClick="copy()">Copy</button>
+    </div>
+    <script type="text/javascript">
+      function genSecret() {
+        let result = "";
+        const characters =
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        for (var i = 0; i < 16; i++) {
+          result += characters.charAt(
+            Math.floor(Math.random() * characters.length)
+          );
+        }
+        return result;
+      }
+
+      function copy() {
+        navigator.clipboard.writeText(document.getElementById("url").innerHTML);
+      }
+
+      async function encrypt() {
+        const secret = genSecret();
+        const input = document.getElementById("input").value;
+        const body = sjcl.encrypt(secret, input);
+
+        const response = await fetch("/", {
+          method: "POST",
+          body,
+        });
+
+        const id = await response.text();
+        const result =
+          id === ""
+            ? "Failed to create! Try again..."
+            : `${window.location.origin}/${id}/${secret}`;
+
+        document.getElementById("url").innerHTML = result;
+        document.getElementById("result").style = "";
+      }
+    </script>
+    {{end}}
+  </body>
+</html>
+{{end}}

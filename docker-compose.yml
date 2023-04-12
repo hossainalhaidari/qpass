@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+  cache:
+    container_name: qpass_cache
+    image: memcached:alpine
+  qpass:
+    container_name: qpass
+    image: hossainalhaidari/qpass
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - MEMCACHED_HOST=qpass_cache:11211
+    depends_on:
+      - cache
